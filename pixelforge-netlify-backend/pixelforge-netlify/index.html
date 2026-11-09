@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PixelForge AI — Game Studio</title>
+<style>
+:root{color-scheme:dark;--bg:#090b12;--panel:#131929;--line:#29334a;--muted:#a6b1ca;--purple:#8977ff;--cyan:#56e6d5}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 20% 0%,#29214f 0,transparent 38%),var(--bg);color:#f3f5ff;font:15px system-ui,Segoe UI,sans-serif}
+header{height:68px;padding:0 5%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:#0b0e18dd;position:sticky;top:0}
+.brand{font-size:19px;font-weight:900}.brand span{color:var(--purple)}.tag{font-size:11px;color:var(--cyan);border:1px solid #285b5c;border-radius:30px;padding:6px 10px}
+main{max-width:1200px;margin:auto;padding:36px 20px}.hero{text-align:center;margin-bottom:28px}.eyebrow{font-size:11px;letter-spacing:2px;color:var(--cyan);font-weight:800}.hero h1{font-size:clamp(32px,5vw,52px);margin:8px 0;background:linear-gradient(90deg,#fff,#b4a9ff,#67e8db);background-clip:text;color:transparent}.hero p{color:var(--muted);margin:0}
+.layout{display:grid;grid-template-columns:340px 1fr;gap:18px}.panel{background:linear-gradient(145deg,#151c2d,#101522);border:1px solid var(--line);border-radius:17px;padding:20px;min-width:0}.panel h2{font-size:15px;margin:0 0 16px}.field{margin-bottom:16px}label{display:block;font-size:11px;font-weight:800;color:#cbd2e5;margin-bottom:8px;letter-spacing:.5px}
+select,textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:#0b1020;color:#fff;font:inherit}textarea{height:180px;resize:vertical;line-height:1.5}.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:7px}
+button{padding:11px 14px;border:0;border-radius:10px;background:linear-gradient(110deg,#7767ff,#a45cdb);color:white;font-weight:800;cursor:pointer}button.secondary{background:#202a40;border:1px solid var(--line)}button:disabled{opacity:.55;cursor:wait}.generate{width:100%}
+.right{display:grid;gap:18px}.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.status{font-size:11px;color:var(--cyan);margin-left:auto}.preview{background:#080b13;border:1px solid var(--line);border-radius:12px;overflow:hidden}.preview-head{display:flex;justify-content:space-between;padding:10px 12px;color:var(--muted);font-size:11px}.preview iframe{display:block;width:100%;height:440px;border:0;background:#fff}.code{white-space:pre;overflow:auto;max-height:440px;background:#080b13;border:1px solid var(--line);border-radius:12px;padding:16px;color:#b9e7dc;font:12px/1.6 ui-monospace,monospace}.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}.small{font-size:11px;color:var(--muted);line-height:1.55}.notice{padding:11px;border:1px solid #66552b;background:#211d12;border-radius:10px;color:#e8d9a8;font-size:11px;line-height:1.5;margin-top:14px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}main{padding:25px 13px}header{padding:0 15px}.preview iframe{height:380px}}
+</style>
+</head>
+<body>
+<header><div class="brand">✦ PIXEL<span>FORGE</span> AI</div><div class="tag">AI GAME STUDIO</div></header>
+<main>
+<section class="hero"><div class="eyebrow">IMAGINE IT · GENERATE IT · PLAY IT</div><h1>Your ideas. Playable worlds.</h1><p>Describe a game and let AI create the first playable browser prototype.</p></section>
+<div class="layout">
+<aside class="panel">
+<h2>✧ Create a game</h2>
+<div class="field"><label for="language">OUTPUT LANGUAGE</label><select id="language"><option value="html">HTML + CSS + JavaScript (playable preview)</option><option value="python">Python (Pygame code)</option><option value="cpp">C++ (SFML code)</option><option value="lua">Lua (LÖVE code)</option></select><div class="hint">The live preview runs browser games. Other languages return source code to run in their own development environment.</div></div>
+<div class="field"><label for="prompt">DESCRIBE YOUR GAME</label><textarea id="prompt" placeholder="Example: Make an anime-style jungle platform game. The hero can jump, collect gems and avoid moving obstacles.">Create a 2D anime-style jungle fighting game. The player controls a ninja, moves around the arena, jumps, and defeats cartoon enemy characters. Add health bars, score, special effects and restart.</textarea></div>
+<button class="generate" id="generate">✦ Generate with AI</button>
+<div class="notice">SECURITY: Your AI key stays on Netlify's server. Never paste it into this page or share it in public code.</div>
+</aside>
+<section class="right">
+<div class="panel">
+<div class="toolbar"><button class="secondary" id="previewTab">▶ Live preview</button><button class="secondary" id="codeTab">{ } Source code</button><span class="status" id="status">● Ready</span></div>
+<div id="previewArea" style="margin-top:14px"><div class="preview"><div class="preview-head"><span id="gameTitle">GAME PREVIEW</span><span>RUNS IN A SANDBOX</span></div><iframe id="gameFrame" title="Generated game preview" sandbox="allow-scripts"></iframe></div></div>
+<div id="codeArea" style="display:none;margin-top:14px"><pre class="code" id="code">Your generated source code will appear here.</pre><div class="actions"><button class="secondary" id="download">↓ Download code</button><button id="copy">Copy code</button></div></div>
+</div>
+<div class="panel"><h2>How it works</h2><div class="small">1. Describe the game. 2. The Netlify backend sends the prompt to Gemini without exposing your API key. 3. The generated code returns here. 4. Browser games run inside a sandboxed preview, and you can copy or download the source.</div></div>
+</section></div></main>
+<script>
+let generatedCode='',generatedTitle='Generated game',generatedLanguage='html';
+const $=id=>document.getElementById(id);
+function showTab(which){$('previewArea').style.display=which==='preview'?'block':'none';$('codeArea').style.display=which==='code'?'block':'none'}
+$('previewTab').onclick=()=>showTab('preview');$('codeTab').onclick=()=>showTab('code');
+$('generate').onclick=async()=>{
+ const prompt=$('prompt').value.trim(),language=$('language').value;
+ if(!prompt){$('status').textContent='● Enter a game description';return}
+ $('generate').disabled=true;$('status').textContent='● AI is creating your game…';
+ try{
+  const res=await fetch('/.netlify/functions/generate-game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,language})});
+  const data=await res.json();
+  if(!res.ok)throw new Error(data.error||'The request failed.');
+  generatedCode=data.code||'';generatedTitle=data.title||'Generated game';generatedLanguage=language;
+  $('code').textContent=generatedCode;$('gameTitle').textContent=generatedTitle.toUpperCase();
+  if(language==='html'){$('gameFrame').srcdoc=generatedCode;showTab('preview')}
+  else{showTab('code');$('status').textContent='● Code generated — preview unavailable for this language'}
+  if(language==='html')$('status').textContent='● Game generated successfully';
+ }catch(err){$('status').textContent='● '+err.message}
+ finally{$('generate').disabled=false}
+};
+$('copy').onclick=async()=>{if(!generatedCode)return;try{await navigator.clipboard.writeText(generatedCode);$('copy').textContent='Copied!';setTimeout(()=>$('copy').textContent='Copy code',1300)}catch{$('status').textContent='● Clipboard unavailable; select code manually'}};
+$('download').onclick=()=>{if(!generatedCode)return;const ext={html:'html',python:'py',cpp:'cpp',lua:'lua'}[generatedLanguage];const blob=new Blob([generatedCode],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pixelforge-game.'+ext;a.click();URL.revokeObjectURL(a.href)};
+</script>
+</body></html>
